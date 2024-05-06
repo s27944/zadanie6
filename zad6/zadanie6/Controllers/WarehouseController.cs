@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
+using zadanie6.Services;
 
 namespace zadanie6.Controllers;
 
@@ -9,48 +10,24 @@ namespace zadanie6.Controllers;
 public class WarehouseController : ControllerBase
 {
     private readonly IConfiguration _configuration;
+    private WarehouseService ws;
 
     public WarehouseController(IConfiguration configuration)
     {
         _configuration = configuration;
-    }
-
-    private async Task<SqlConnection> GetConnection()
-    {
-        var connection = new SqlConnection(_configuration.GetConnectionString("Default"));
-        if (connection.State != ConnectionState.Open)
-        {
-            await connection.OpenAsync();
-        }
-
-        return connection;
+        this.ws = new WarehouseService(_configuration);
     }
 
 
     [HttpPost]
-    public async Task<int> nazwijToTak(CreateDataBaseRequest request)
+    public async Task<IActionResult> AddProductToWarehouse(CreateDataBaseRequest request)
     {
-        await using var connection = await GetConnection();
-        var command = new SqlCommand(
-            @"IF EXISTS (SELECT 1 FROM PRODUCT WHERE IdProduct = @1)
-                      IF EXISTS (SELECT 1 FROM WAREHOUSE WHERE IdWareHouse = @2)
-                        IF @3 < 0 OR @3 = 0 RETURN", connection
-        );
-
-        command.Parameters.AddWithValue("@1", request.IdProduct);
-        command.Parameters.AddWithValue("@2", request.IdWarehouse);
-        command.Parameters.AddWithValue("@3", request.Amount);
-
+        int? id = await ws.AddProductToWarehouse(request);
+        if (id == null)
+        {
+            return NotFound();
+        }
         
-
-        var reader = await command.ExecuteReaderAsync();
-
-        // if (!reader.HasRows)
-        // {
-        //     return 0;
-        // }
-
-
-        return 2;
+        return Created();
     }
 }
