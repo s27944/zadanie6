@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using zadanie6.Services;
 
@@ -22,12 +23,12 @@ public class WarehouseController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddProductToWarehouse(CreateDataBaseRequest request)
     {
-        int? id = await ws.AddProductToWarehouse(request);
-        if (id == null)
+        int id = await ws.AddProductToWarehouse(request);
+        if (id == 0)
         {
-            return NotFound();
+            return NotFound();  
         }
-        
-        return Created();
+
+        return Created("/api/warehouse/" + id, null);
     }
 }
